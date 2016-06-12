@@ -1,0 +1,10 @@
+Cython>=0.24
+falcon>=1.0.0
+gevent>=1.1.1
+gunicorn>=19.6.0
+MySQL-python>=1.2.5
+redis>=2.10.5
+repoze.lru>=0.6
+torndb>=0.3
+ujson>=1.35
+validators>=0.10.2
