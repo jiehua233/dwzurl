@@ -84,17 +84,9 @@ class ShortLinkResource(object):
             raise ShortLinkError("-2", tag, "Url is invalid, e.g: http://www.google.com.hk")
 
         url = urllib.quote_plus(body)
-        if tag == "":
-            # 未指定 tag，随机生成
-            tag = self.transform_url(url)
-        else:
-            # 指定 tag，判断是否合法可用
-            if self.get_tag(tag):
-                raise ShortLinkError(-3, tag, "Tag has been used.")
-            if len(tag) > 16:
-                raise ShortLinkError(-4, tag, "Tag length should less then 16 byte.")
-            self.save_tag(tag, url)
-
+        permanent = req.get_param_as_bool("permanent")
+        permanent = 1 if permanent == True else 0
+        tag = self.transform_url(url, permanent)
         resp.status = falcon.HTTP_200
         resp.body = json.dumps({"c": 0, "tag": tag, "msg": "ok"})
 
@@ -103,11 +95,11 @@ class ShortLinkResource(object):
         d = db.get("SELECT `url` FROM `urls` WHERE `tag` = %s", tag)
         return d["url"] if d else None
 
-    def transform_url(self, url):
+    def transform_url(self, url, permanent):
         tag = rds.get(url_key(url))
         if tag is None:
             tag = self.generate_tag()
-            self.save_tag(tag, url)
+            self.save_tag(tag, url, permanent)
 
         return tag
 
@@ -126,8 +118,8 @@ class ShortLinkResource(object):
 
         return result
 
-    def save_tag(self, tag, url):
-        db.execute("INSERT INTO `urls`(`tag`, `url`)VALUES(%s, %s)", tag, url)
+    def save_tag(self, tag, url, permanent):
+        db.execute("INSERT INTO `urls`(`tag`, `url`, `permanent`)VALUES(%s, %s, %s)", tag, url, permanent)
         rds.setex(url_key(url), 86400, tag)
 
 
