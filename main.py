@@ -68,8 +68,11 @@ class ShortLinkResource(object):
     def on_get(self, req, resp, tag):
         url = self.get_tag(tag)
         if url is None:
+            # 不存在的链接，跳转到index页面
+            url = self.get_tag("index")
             logging.warn("tag: %s is empty", tag)
-        url = "/index" if url is None else urllib.unquote_plus(url)
+
+        url = urllib.unquote_plus(url)
         # raise falcon.HTTPMovedPermanently(url)
         raise falcon.HTTPFound(url)
 
