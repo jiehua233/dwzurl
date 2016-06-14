@@ -132,7 +132,7 @@ class Proxyfix(object):
         getter = environ.get
         remote_addr = getter('HTTP_X_FORWARDED_FOR', '').split(',')[-1].strip()
         remote_addr = getter('HTTP_X_REAL_IP', remote_addr)
-        if remote_addr is not None:
+        if remote_addr:
             environ['REMOTE_ADDR'] = remote_addr
 
         return self.app(environ, start_response)
