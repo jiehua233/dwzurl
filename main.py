@@ -123,12 +123,29 @@ class ShortLinkResource(object):
         rds.setex(url_key(url), 86400, tag)
 
 
+class Proxyfix(object):
+
+    def __init__(self, app):
+        self.app = app
+
+    def __call__(self, environ, start_response):
+        getter = environ.get
+        remote_addr = getter('HTTP_X_FORWARDED_FOR', '').split(',')[-1].strip()
+        remote_addr = getter('HTTP_X_REAL_IP', remote_addr)
+        if remote_addr is not None:
+            environ['REMOTE_ADDR'] = remote_addr
+
+        return self.app(environ, start_response)
+
+
 app = falcon.API()
 app.add_route("/{tag}", ShortLinkResource())
 app.add_error_handler(ShortLinkError)
+app = Proxyfix(app)
 
 
 if __name__ == "__main__":
     host, port = config.bind.split(":")
+    print "starting server on:", config.bind
     httpd = simple_server.make_server(host, int(port), app)
     httpd.serve_forever()
